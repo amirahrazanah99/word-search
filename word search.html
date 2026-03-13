@@ -1,0 +1,235 @@
+﻿<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <title>Sains Word Search Ultra Fun</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap');
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .game-card {
+            background: white;
+            padding: 20px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            border: 4px solid #4caf50;
+        }
+        h2 { color: #2e7d32; font-family: 'Fredoka One', cursive; font-size: 28px; margin: 10px 0; }
+        
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            font-weight: bold;
+            background: #f1f8e9;
+            padding: 10px;
+            border-radius: 15px;
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            background: #fff;
+            padding: 10px;
+            border-radius: 15px;
+        }
+        .cell {
+            aspect-ratio: 1/1;
+            background: #ffffff;
+            border: 3px solid #c8e6c9;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #333;
+        }
+        .cell:hover { transform: scale(1.1); border-color: #81c784; }
+        .cell.selected { background: #fff176; border-color: #fbc02d; transform: scale(1.05); }
+        .cell.found { 
+            background: #66bb6a; 
+            color: white; 
+            border-color: #388e3c; 
+            animation: pop 0.4s ease-out;
+            cursor: default; 
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .questions {
+            text-align: left;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px dashed #81c784;
+        }
+        .questions p { margin: 8px 0; font-size: 14px; display: flex; align-items: center; font-weight: 600; }
+        .done { color: #bbb; text-decoration: line-through; background: #e8f5e9; border-radius: 5px; }
+        
+        .btn-refresh {
+            margin-top: 20px;
+            padding: 12px 25px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 4px 0 #388e3c;
+            transition: 0.1s;
+        }
+        .btn-refresh:active { transform: translateY(4px); box-shadow: 0 0 0 #388e3c; }
+    </style>
+</head>
+<body>
+
+<div class="game-card">
+    <h2>🧪 Lab Sains Cilik</h2>
+    
+    <div class="stats-container">
+        <span>Masa: <span id="timer">0s</span></span>
+        <span>Dijumpai: <span id="count">0</span>/5</span>
+    </div>
+
+    <div id="grid"></div>
+
+    <div class="questions" id="qList"></div>
+
+    <button class="btn-refresh" onclick="location.reload()">Main Semula 🔄</button>
+</div>
+
+<script>
+    const dataFromSheet = [
+        { q: "Organ untuk melihat?", a: "EYES" },
+        { q: "Organ untuk mendengar?", a: "EARS" },
+        { q: "Tumbuhan perlu ini untuk hidup?", a: "WATER" },
+        { q: "Deria bau guna apa?", a: "NOSE" },
+        { q: "Kita sedut ini untuk bernafas?", a: "AIR" }
+    ];
+
+    let gridLayout = Array(6).fill().map(() => Array(6).fill(''));
+    let foundCount = 0;
+    let seconds = 0;
+    let timerInterval;
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            seconds++;
+            document.getElementById('timer').textContent = seconds + "s";
+        }, 1000);
+    }
+
+    function initGame() {
+        // Susun perkataan secara Mendatar ATAU Menegak
+        dataFromSheet.forEach(item => {
+            let placed = false;
+            let safety = 0;
+            while (!placed && safety < 100) {
+                const isVertical = Math.random() > 0.5;
+                let row = Math.floor(Math.random() * (isVertical ? (7 - item.a.length) : 6));
+                let col = Math.floor(Math.random() * (isVertical ? 6 : (7 - item.a.length)));
+                
+                let canPlace = true;
+                for (let i = 0; i < item.a.length; i++) {
+                    let r = isVertical ? row + i : row;
+                    let c = isVertical ? col : col + i;
+                    if (gridLayout[r][c] !== '' && gridLayout[r][c] !== item.a[i]) {
+                        canPlace = false; break;
+                    }
+                }
+
+                if (canPlace) {
+                    for (let i = 0; i < item.a.length; i++) {
+                        let r = isVertical ? row + i : row;
+                        let c = isVertical ? col : col + i;
+                        gridLayout[r][c] = item.a[i];
+                    }
+                    placed = true;
+                }
+                safety++;
+            }
+        });
+
+        // Lukis Grid
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const gridDiv = document.getElementById('grid');
+        for (let r = 0; r < 6; r++) {
+            for (let c = 0; c < 6; c++) {
+                if (gridLayout[r][c] === '') gridLayout[r][c] = alphabet[Math.floor(Math.random() * 26)];
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.textContent = gridLayout[r][c];
+                cell.dataset.row = r;
+                cell.dataset.col = c;
+                cell.onclick = () => toggleCell(cell);
+                gridDiv.appendChild(cell);
+            }
+        }
+
+        document.getElementById('qList').innerHTML = dataFromSheet.map((item, i) => 
+            `<p id="q-${item.a}">${i+1}. ${item.q}</p>`).join('');
+        
+        startTimer();
+    }
+
+    function toggleCell(cell) {
+        if (cell.classList.contains('found')) return;
+        cell.classList.toggle('selected');
+        checkFound();
+    }
+
+    function checkFound() {
+        let selected = Array.from(document.querySelectorAll('.cell.selected'));
+        let word = selected.map(el => el.textContent).join('');
+        let reversedWord = word.split('').reverse().join('');
+
+        dataFromSheet.forEach(item => {
+            if (word === item.a || reversedWord === item.a) {
+                selected.forEach(el => {
+                    el.classList.replace('selected', 'found');
+                });
+                
+                let qEl = document.getElementById(`q-${item.a}`);
+                if (!qEl.classList.contains('done')) {
+                    qEl.classList.add('done');
+                    qEl.innerHTML += " 🌟";
+                    foundCount++;
+                    document.getElementById('count').textContent = foundCount;
+                }
+
+                if (foundCount === dataFromSheet.length) {
+                    clearInterval(timerInterval);
+                    setTimeout(() => {
+                        alert(`TAHNIAH! 🏆\nSemua jawapan dijumpai dalam ${seconds} saat!`);
+                    }, 500);
+                }
+            }
+        });
+    }
+
+    initGame();
+</script>
+</body>
+</html>
