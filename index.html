@@ -106,7 +106,7 @@
 <body>
 
 <div class="game-card">
-    <h2>🧪 Lab Sains Cilik</h2>
+    <h2>🧪 Makmal Sains Cilik</h2>
     
     <div class="stats-container">
         <span>Masa: <span id="timer">0s</span></span>
@@ -117,7 +117,7 @@
 
     <div class="questions" id="qList"></div>
 
-    <button class="btn-refresh" onclick="location.reload()">Main Semula 🔄</button>
+    <button class="btn-refresh" onclick="location.reload()">Main Semula ??</button>
 </div>
 
 <script>
@@ -214,7 +214,7 @@
                 let qEl = document.getElementById(`q-${item.a}`);
                 if (!qEl.classList.contains('done')) {
                     qEl.classList.add('done');
-                    qEl.innerHTML += " 🌟";
+                    qEl.innerHTML += " ??";
                     foundCount++;
                     document.getElementById('count').textContent = foundCount;
                 }
@@ -222,7 +222,7 @@
                 if (foundCount === dataFromSheet.length) {
                     clearInterval(timerInterval);
                     setTimeout(() => {
-                        alert(`TAHNIAH! 🏆\nSemua jawapan dijumpai dalam ${seconds} saat!`);
+                        alert(`TAHNIAH! ??\nSemua jawapan dijumpai dalam ${seconds} saat!`);
                     }, 500);
                 }
             }
@@ -233,3 +233,4 @@
 </script>
 </body>
 </html>
+
